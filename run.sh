@@ -12,11 +12,18 @@ directory=$1
 # Check if the directory exists
 if [ -d "$directory" ]; 
 then
-    echo "Compiling with cmake to directory '$directory'"
+    # Compile
+    echo "Compiling with cmake to directory '/$directory/'..."
 
     cmake -S . -B ${directory}
     cmake --build ${directory}
+
+    # Execute
+    echo "Starting server executable in '/$directory/'..."
+
+    ./${directory}/server
+
 else
-    echo "Directory '$directory' does not exist."
+    echo "Directory '/$directory/' does not exist."
     exit 1
 fi

@@ -10,32 +10,25 @@ void config_server(uint16_t port, uint32_t connections, char *folder);
 void start_server();
 
 // Handles internal client threads
-void *hande_client(void *arg);
+void *handle_client(void *arg);
 
-// Checks user credentials against logins file
-// RETURNS username
-char *get_user(char *login_folder);
-
-// Gets messages from a client given a client socket
-// RETURNS char *message
-char *get_messages(int32_t socket);
+// Lists the given files in the user's directory
+// RETURNS 0 on success, -1 on failure
+int list_files(char *directory, int client_socket);
 
 // Copies a given file to the user's directory
 // RETURNS 0 on success, -1 on failure
-uint8_t store_file(struct ClientData, char *filename);
+int receive_file(char *directory, int client_socket);
 
 // Sends a given file to the client
 // RETURNS 0 on success, -1 on failure
-uint8_t send_file(struct ClientData, char *filename);
+int send_file(char *directory, int client_socket);
 
 // Deletes a file in the user's directory
 // RETURNS 0 on success, -1 on failure
-uint8_t delete_file(struct ClientData, char *filename);
+int delete_file(char *directory, int client_socket);
 
-// Terminates client thread given client address
-void terminate_client(uint32_t client_addr);
-
-// Terminates the server and frees memory
+// // Terminates the server and frees memory
 void terminate_server(void);
 
 #endif /* SERVER_H */
