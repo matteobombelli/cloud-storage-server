@@ -25,11 +25,11 @@ char *login_folder;
 uint32_t SERVER_SOCKET;
 int server_started = 0;
 
-
 uint32_t empty_socket = 0;
 pthread_mutex_t client_lock = PTHREAD_MUTEX_INITIALIZER;
 uint32_t client_count = 0;
 struct ClientInfo *clients;
+
 
 void config_server(uint16_t port, uint32_t connections, char *folder) {
     FILE *fptr = fopen("config.txt", "w");
@@ -45,6 +45,7 @@ void config_server(uint16_t port, uint32_t connections, char *folder) {
 
     fclose(fptr);
 }
+
 
 void start_server() {
     // Extract from config.txt
@@ -150,8 +151,11 @@ void start_server() {
         printf("New client connected - IP: %u, Port: %u\n", clients[empty_socket].ip, clients[empty_socket].port);
     }
 
+    printf("Terminating server...\n");
     terminate_server();
+    printf("Server terminated.\n");
 }
+
 
 int list_files(char *directory, int client_socket) {
     DIR *dir = opendir(directory);
@@ -163,7 +167,7 @@ int list_files(char *directory, int client_socket) {
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
         // Construct the full path of the file
-        char filepath[256];  // Adjust the buffer size according to your needs
+        char filepath[256];
         snprintf(filepath, sizeof(filepath), "%s/%s", directory, entry->d_name);
 
         // Get information about the file
@@ -185,7 +189,7 @@ int list_files(char *directory, int client_socket) {
 
 
 int receive_file(char *directory, int client_socket) {
-    char filename[256];  // Adjust the buffer size according to your needs
+    char filename[256];
 
     // Get the filename from the client
     ssize_t bytes_received = recv(client_socket, filename, sizeof(filename) - 1, 0);
@@ -196,7 +200,7 @@ int receive_file(char *directory, int client_socket) {
     }
 
     // Construct the full path of the file
-    char filepath[256];  // Adjust the buffer size according to your needs
+    char filepath[256];
     snprintf(filepath, sizeof(filepath), "%s/%s", directory, filename);
 
     // Open the file for writing
@@ -219,8 +223,9 @@ int receive_file(char *directory, int client_socket) {
     return 0;
 }
 
+
 int send_file(char *directory, int client_socket) {
-    char filename[256];  // Adjust the buffer size according to your needs
+    char filename[256];
 
     // Get the filename to send from the client
     ssize_t bytes_received = recv(client_socket, filename, sizeof(filename) - 1, 0);
@@ -231,7 +236,7 @@ int send_file(char *directory, int client_socket) {
     }
 
     // Construct the full path of the file
-    char filepath[256];  // Adjust the buffer size according to your needs
+    char filepath[256];
     snprintf(filepath, sizeof(filepath), "%s/%s", directory, filename);
 
     // Open the file for reading
@@ -254,8 +259,9 @@ int send_file(char *directory, int client_socket) {
     return 0;
 }
 
+
 int delete_file(char *directory, int client_socket) {
-    char filename[256];  // Adjust the buffer size according to your needs
+    char filename[256];
 
     // Get the filename to delete from the client
     ssize_t bytes_received = recv(client_socket, filename, sizeof(filename) - 1, 0);
@@ -266,7 +272,7 @@ int delete_file(char *directory, int client_socket) {
     }
 
     // Construct the full path of the file
-    char filepath[256];  // Adjust the buffer size according to your needs
+    char filepath[256];
     snprintf(filepath, sizeof(filepath), "%s/%s", directory, filename);
 
     // Attempt to delete the file
@@ -284,6 +290,14 @@ void terminate_server() {
     if (close(SERVER_SOCKET) == -1) {
         perror("Error closing server socket");
         exit(EXIT_FAILURE);
+    }
+
+    for (int i = 0; i < MAX_CLIENTS; ++i)
+    {
+        if (clients[i].valid)
+        {
+        pthread_join(clients[i].thread, NULL);
+        }
     }
 
     // Close client sockets
@@ -313,7 +327,7 @@ void terminate_server() {
 
 
 char* access_client_directory(const char *username) {
-    char client_dir[256];  // Adjust the buffer size according to your needs
+    char client_dir[256];
     snprintf(client_dir, sizeof(client_dir), "./clients/%s", username);
 
     // Create the client directory if it doesn't exist
@@ -325,11 +339,12 @@ char* access_client_directory(const char *username) {
     return strdup(client_dir);  // Return the dynamically allocated directory name
 }
 
+
 void *handle_client(void *arg) {
     int32_t client_socket = *((int32_t *)arg);
     free(arg);
 
-    char login[256];  // Adjust the buffer size according to your needs
+    char login[256];
     memset(login, 0, sizeof(login));  // Initialize the login buffer
 
     // Ask the client for login information
